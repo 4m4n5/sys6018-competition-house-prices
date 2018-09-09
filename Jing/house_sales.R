@@ -13,48 +13,40 @@ house <- rbind(train, test)
 
 
 # fill in missing values for house (train+test) ---------------------------
-house_missing <- data.frame(index = names(train), missing_count = colSums(sapply(train, is.na)))
-house_missing[house_missing$missing_count>0,]
-#                     index missing_count
-# LotFrontage   LotFrontage           259
-# Alley               Alley          1369
-# MasVnrType     MasVnrType             8
-# MasVnrArea     MasVnrArea             8
-# BsmtQual         BsmtQual            37
-# BsmtCond         BsmtCond            37
-# BsmtExposure BsmtExposure            38
-# BsmtFinType1 BsmtFinType1            37
-# BsmtFinType2 BsmtFinType2            38
-# Electrical     Electrical             1
-# FireplaceQu   FireplaceQu           690
-# GarageType     GarageType            81
-# GarageYrBlt   GarageYrBlt            81
-# GarageFinish GarageFinish            81
-# GarageQual     GarageQual            81
-# GarageCond     GarageCond            81
-# PoolQC             PoolQC          1453
-# Fence               Fence          1179
-# MiscFeature   MiscFeature          1406
+house_missing <- data.frame(index = names(house), missing_count = colSums(sapply(house, is.na)))
+house_missing$index[which(house_missing$missing_count>0)]
+#  [1] MSZoning     LotFrontage  Alley        Utilities    Exterior1st  Exterior2nd  MasVnrType   MasVnrArea  
+#  [9] BsmtQual     BsmtCond     BsmtExposure BsmtFinType1 BsmtFinSF1   BsmtFinType2 BsmtFinSF2   BsmtUnfSF   
+# [17] TotalBsmtSF  Electrical   BsmtFullBath BsmtHalfBath KitchenQual  Functional   FireplaceQu  GarageType  
+# [25] GarageYrBlt  GarageFinish GarageCars   GarageArea   GarageQual   GarageCond   PoolQC       Fence       
+# [33] MiscFeature  SaleType     SalePrice   
 
 
-# fill in missing LotFrontage
-table(house$LotFrontage) # shows possible outliers, will fill with median
-house$LotFrontage[which(is.na(house$LotFrontage))] <- median(house$LotFrontage, na.rm=TRUE)
+# fill in missing LotFrontage and GarageArea
+house$LotFrontage[which(is.na(house$LotFrontage))] <- mean(house$LotFrontage, na.rm=TRUE)
+house$GarageArea[which(is.na(house$GarageArea))] <- mean(house$GarageArea, na.rm=TRUE)
 
-# fill in missing Alley
 house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)] <- 
   lapply(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)], as.character)
 house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)][is.na(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)])] <- 'None'
 house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)] <-
   lapply(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)], as.factor)
 
-# fill in missing MasVnrArea
-table(house$MasVnrArea) # no obvious outlier, will fill with mean
-house$MasVnrArea[which(is.na(house$MasVnrArea))] <- mean(house$MasVnrArea, na.rm=TRUE)
+# fill in missing MasVnrArea,GarageYrBlt,BsmtFinSF1,BsmtFinSF2,BsmtUnfSF,TotalBsmtSF,BsmtFullBath,BsmtHalfBath
+house[,c(27,35,37:39,48,49,60)][is.na(house[,c(27,35,37:39,48,49,60)])] <- 0
 
-# fill in missing GarageYrBlt
-house$GarageYrBlt[which(is.na(house$GarageYrBlt))] <- 0
 
+# function for get mode https://www.tutorialspoint.com/r/r_mean_median_mode.htm
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# missing values for MSZoning,Utilities,Exterior1st,Exterior2nd,KitchenQual,Functional,GarageCars,SaleType
+modeList <- c(3,10,24,25,54,56,62,79)
+for (i in 1:length(modeList)) {
+  house[is.na(house[,modeList[i]]),modeList[i]] <- getmode(house[,modeList[i]])
+}
 
 
 
@@ -64,106 +56,6 @@ train <- house[house$isTrain==1,]
 train <- subset(train,select=-isTrain)
 test <- house[house$isTrain==0,]
 test <- subset(test,select=-c(isTrain,SalePrice))
-
-
-# fill in missing values for test set -----------------------------------------
-test_missing <- data.frame(index = names(test), missing_count = colSums(sapply(test, is.na)))
-test_missing[test_missing$missing_count>0,]
-#                     index missing_count
-# MSZoning         MSZoning             4
-# Utilities       Utilities             2
-# Exterior1st   Exterior1st             1
-# Exterior2nd   Exterior2nd             1
-# BsmtFinSF1     BsmtFinSF1             1
-# BsmtFinSF2     BsmtFinSF2             1
-# BsmtUnfSF       BsmtUnfSF             1
-# TotalBsmtSF   TotalBsmtSF             1
-# BsmtFullBath BsmtFullBath             2
-# BsmtHalfBath BsmtHalfBath             2
-# KitchenQual   KitchenQual             1
-# Functional     Functional             2
-# GarageCars     GarageCars             1
-# GarageArea     GarageArea             1
-# SaleType         SaleType             1
-
-# fill in missing values for MSZoning
-table(train$MSZoning)
-# C (all)      FV      RH      RL      RM 
-#      10      65      16    1151     218
-test$MSZoning[which(is.na(test$MSZoning))] <- 'RL'
-
-# fill in missing values for Utilities
-table(train$Utilities)
-# AllPub NoSeWa 
-# 1459      1 
-test$Utilities[which(is.na(test$Utilities))] <- 'AllPub'
-
-# fill in missing value for Exterior1st
-table(train$Exterior1st)
-# AsbShng AsphShn BrkComm BrkFace  CBlock CemntBd HdBoard ImStucc MetalSd Plywood   Stone  Stucco VinylSd Wd Sdng WdShing 
-#      20       1       2      50       1      61     222       1     220     108       2      25     515     206      26
-test$Exterior1st[which(is.na(test$Exterior1st))] <- 'VinylSd'
-
-# fill in missing value for Exterior2nd
-table(train$Exterior2nd)
-test$Exterior2nd[which(is.na(test$Exterior2nd))] <- 'VinylSd'
-
-# fill in missing value for BsmtFinSF1
-table(train$BsmtFinSF1)
-test$BsmtFinSF1[which(is.na(test$BsmtFinSF1))] <- mean(train$BsmtFinSF1)
-
-# fill in missing value for BsmtFinSF2
-table(train$BsmtFinSF2)
-test$BsmtFinSF2[which(is.na(test$BsmtFinSF2))] <- mean(train$BsmtFinSF2)
-
-# fill in missing value for BsmtUnfSF
-table(train$BsmtUnfSF)
-test$BsmtUnfSF[which(is.na(test$BsmtUnfSF))] <- mean(train$BsmtUnfSF)
-
-# fill in missing value for TotalBsmtSF
-table(train$TotalBsmtSF)
-test$TotalBsmtSF[which(is.na(test$TotalBsmtSF))] <- mean(train$TotalBsmtSF)
-
-# fill in missing value for BsmtFullBath
-table(train$BsmtFullBath)
-#   0   1   2   3 
-# 856 588  15   1
-test$BsmtFullBath[which(is.na(test$BsmtFullBath))] <- 0
-
-# fill in missing value for BsmtHalfBath
-table(train$BsmtHalfBath)
-#    0    1    2 
-# 1378   80    2
-test$BsmtHalfBath[which(is.na(test$BsmtHalfBath))] <- 0
-
-# fill in missing value for KitchenQual
-table(train$KitchenQual)
-#  Ex  Fa  Gd  TA 
-# 100  39 586 735
-test$KitchenQual[which(is.na(test$KitchenQual))] <- 'TA'
-
-# fill in missing value for Functional
-table(train$Functional)
-# Maj1 Maj2 Min1 Min2  Mod  Sev  Typ 
-#   14    5   31   34   15    1 1360 
-test$Functional[which(is.na(test$Functional))] <- 'Typ'
-
-# fill in missing value for GarageCars
-table(train$GarageCars)
-#  0   1   2   3   4 
-# 81 369 824 181   5
-test$GarageCars[which(is.na(test$GarageCars))] <- 2
-
-# fill in missing value for GarageArea
-table(train$GarageArea)
-test$GarageArea[which(is.na(test$GarageArea))] <- mean(train$GarageArea)
-
-# fill in missing value for SaleType
-table(train$SaleType)
-# COD   Con ConLD ConLI ConLw   CWD   New   Oth    WD 
-#  43     2     9     5     5     4   122     3  1267
-test$SaleType[which(is.na(test$SaleType))] <- 'WD'
-
 
 
 
@@ -197,7 +89,7 @@ summary(lm2)
 pred1 <- predict(lm2, newdata = validation)
 rmse1 <- sqrt(mean((pred1-validation$SalePrice)^2))
 rmse1
-# [1] 60734.49
+# [1] 60754.57
 
 # submission 1
 model1 <- train(SalePrice ~ .-Id-MSSubClass-Alley-LotShape-Utilities-Heating-HeatingQC
@@ -222,7 +114,7 @@ varImpPlot(rf_model1)
 rf_pred <- predict(rf_model1, newdata = validation)
 rf_rmse <- sqrt(mean((rf_pred-validation$SalePrice)^2))
 rf_rmse
-# [1] 23621.77
+# [1] 23681.36
 
 #model2 <- randomForest(SalePrice~., data=train)
 #prediction2 <- predict(model2, newdata=test)
