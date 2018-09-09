@@ -42,89 +42,19 @@ table(house$LotFrontage) # shows possible outliers, will fill with median
 house$LotFrontage[which(is.na(house$LotFrontage))] <- median(house$LotFrontage, na.rm=TRUE)
 
 # fill in missing Alley
-house$Alley <- as.character(house$Alley)
-house$Alley[which(is.na(house$Alley))] <- 'None'
-house$Alley <- as.factor(house$Alley)
-
-# fill in missing MasVnrType
-house$MasVnrType[which(is.na(house$MasVnrType))] <- 'None'
+house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)] <- 
+  lapply(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)], as.character)
+house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)][is.na(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)])] <- 'None'
+house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)] <-
+  lapply(house[,c(7,26,31,32,33,34,36,43,58,59,61,64,65,73:75)], as.factor)
 
 # fill in missing MasVnrArea
 table(house$MasVnrArea) # no obvious outlier, will fill with mean
 house$MasVnrArea[which(is.na(house$MasVnrArea))] <- mean(house$MasVnrArea, na.rm=TRUE)
 
-# fill in missing BsmtQual
-house$BsmtQual <- as.character(house$BsmtQual)
-house$BsmtQual[which(is.na(house$BsmtQual))] <- 'None'
-house$BsmtQual <- as.factor(house$BsmtQual)
-
-# fill in missing BsmtCond
-house$BsmtCond <- as.character(house$BsmtCond)
-house$BsmtCond[which(is.na(house$BsmtCond))] <- 'None'
-house$BsmtCond <- as.factor(house$BsmtCond)
-
-# fill in missing BsmtExposure
-house$BsmtExposure <- as.character(house$BsmtExposure)
-house$BsmtExposure[which(is.na(house$BsmtExposure))] <- 'None'
-house$BsmtExposure <- as.factor(house$BsmtExposure)
-
-# fill in missing BsmtFinType1
-house$BsmtFinType1 <- as.character(house$BsmtFinType1)
-house$BsmtFinType1[which(is.na(house$BsmtFinType1))] <- 'None'
-house$BsmtFinType1 <- as.factor(house$BsmtFinType1)
-
-# fill in missing BsmtFinType2
-house$BsmtFinType2 <- as.character(house$BsmtFinType2)
-house$BsmtFinType2[which(is.na(house$BsmtFinType2))] <- 'None'
-house$BsmtFinType2 <- as.factor(house$BsmtFinType2)
-
-# fill in missing Electrical
-house$Electrical <- as.character(house$Electrical)
-house$Electrical[which(is.na(house$Electrical))] <- 'None'
-house$Electrical <- as.factor(house$Electrical)
-
-# fill in missing FireplaceQu
-house$FireplaceQu <- as.character(house$FireplaceQu)
-house$FireplaceQu[which(is.na(house$FireplaceQu))] <- 'None'
-house$FireplaceQu <- as.factor(house$FireplaceQu)
-
-# fill in missing GarageType
-house$GarageType <- as.character(house$GarageType)
-house$GarageType[which(is.na(house$GarageType))] <- 'None'
-house$GarageType <- as.factor(house$GarageType)
-
 # fill in missing GarageYrBlt
 house$GarageYrBlt[which(is.na(house$GarageYrBlt))] <- 0
 
-# fill in missing GarageFinish
-house$GarageFinish <- as.character(house$GarageFinish)
-house$GarageFinish[which(is.na(house$GarageFinish))] <- 'None'
-house$GarageFinish <- as.factor(house$GarageFinish)
-
-# fill in missing GarageQual
-house$GarageQual <- as.character(house$GarageQual)
-house$GarageQual[which(is.na(house$GarageQual))] <- 'None'
-house$GarageQual <- as.factor(house$GarageQual)
-
-# fill in missing GarageCond
-house$GarageCond <- as.character(house$GarageCond)
-house$GarageCond[which(is.na(house$GarageCond))] <- 'None'
-house$GarageCond <- as.factor(house$GarageCond)
-
-# fill in missing PoolQC
-house$PoolQC <- as.character(house$PoolQC)
-house$PoolQC[which(is.na(house$PoolQC))] <- 'None'
-house$PoolQC <- as.factor(house$PoolQC)
-
-# fill in missing Fence
-house$Fence <- as.character(house$Fence)
-house$Fence[which(is.na(house$Fence))] <- 'None'
-house$Fence <- as.factor(house$Fence)
-
-# fill in missing MiscFeature
-house$MiscFeature <- as.character(house$MiscFeature)
-house$MiscFeature[which(is.na(house$MiscFeature))] <- 'None'
-house$MiscFeature <- as.factor(house$MiscFeature)
 
 
 
@@ -176,8 +106,6 @@ test$Exterior1st[which(is.na(test$Exterior1st))] <- 'VinylSd'
 
 # fill in missing value for Exterior2nd
 table(train$Exterior2nd)
-# AsbShng AsphShn Brk Cmn BrkFace  CBlock CmentBd HdBoard ImStucc MetalSd   Other Plywood   Stone  Stucco VinylSd Wd Sdng Wd Shng 
-#      20       3       7      25       1      60     207      10     214       1     142       5      26     504     197      38 
 test$Exterior2nd[which(is.na(test$Exterior2nd))] <- 'VinylSd'
 
 # fill in missing value for BsmtFinSF1
