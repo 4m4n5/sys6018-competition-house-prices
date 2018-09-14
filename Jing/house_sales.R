@@ -160,6 +160,7 @@ rf_rmse2 <- sqrt(mean((rf_pred2-validation$SalePrice)^2))
 rf_rmse2
 # [1] 23887.42
 
+
 model2 <- randomForest(SalePrice~OverallQual+Neighborhood+GrLivArea+GarageCars+ExterQual+
                                  TotalBsmtSF+X1stFlrSF+GarageArea+BsmtFinSF1+X2ndFlrSF+
                                  BsmtQual+KitchenQual+YearBuilt+FullBath+LotArea+TotRmsAbvGrd+
@@ -168,6 +169,8 @@ prediction2 <- predict(model2, newdata=test)
 result2 <- data.frame(Id = test$Id, SalePrice = prediction2)
 write.csv(result2, "zz_rf.csv", row.names=FALSE) # 0.14456
 
+write.csv(train, file = "trainadjusted.csv")
+write.csv(test, file = "testadjusted.csv")
 
 
 
