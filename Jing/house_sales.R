@@ -8,6 +8,7 @@ library(purrr)
 library(ggplot2)
 library(randomForest)
 library(gridExtra)
+library(class)
 
 train <- read.csv('train.csv')
 test <- read.csv('test.csv')
@@ -101,6 +102,9 @@ summary(lm1)
 # Residual standard error: 23060 on 925 degrees of freedom
 # Multiple R-squared:  0.9355,	Adjusted R-squared:  0.9186 
 # F-statistic:  55.4 on 242 and 925 DF,  p-value: < 2.2e-16
+
+
+
 
 lm2 = train(SalePrice ~ .-MSSubClass-Alley-LotShape-Utilities-Heating-HeatingQC
                          -Electrical-LowQualFinSF-BsmtFullBath-BsmtHalfBath-MiscVal, 
@@ -218,7 +222,7 @@ knn_predict_weighted <- function(training, test, k) {
   for (i in 1:nrow(test)) {
     dist <- c()
     for (j in 1:nrow(training)) {
-      dist <- c(dist, euclidean_dist(test[i,], training[j,]))
+      dist <- c(dist, manhattan_dist(test[i,], training[j,]))
     }
     dist_df <- data.frame(SalePrice = training$SalePrice, dist)
     dist_df <- dist_df[order(dist_df$dist),]
@@ -252,10 +256,14 @@ knn_house <- select(knn_house, c(Id,OverallQual,Neighborhood,GrLivArea,GarageCar
                                  X1stFlrSF,GarageArea,BsmtFinSF1,X2ndFlrSF,BsmtQual,KitchenQual,
                                  YearBuilt,FullBath,LotArea,isTrain,SalePrice))
 
+knn_house <- select(knn_house, c(Id,OverallQual,GrLivArea,GarageCars,TotalBsmtSF,
+                                 X1stFlrSF,GarageArea,BsmtFinSF1,X2ndFlrSF,isTrain,SalePrice))
+
+
 knn_house_nonfactor <- knn_house %>%  select_if(negate(is.factor))
 knn_house_factor <- data.frame(Id=knn_house$Id,knn_house %>% select_if(is.factor))
 
-knn_house_nonfactor[,2:12] <- as.data.frame(lapply(knn_house_nonfactor[,2:12], normalize))
+knn_house_nonfactor[,2:9] <- as.data.frame(lapply(knn_house_nonfactor[,2:9], normalize))
 
 
 for (i in 1:length(colnames(knn_house_factor))) {
@@ -268,7 +276,7 @@ for (i in 1:length(colnames(knn_house_factor))) {
   }
 }
 
-knn_house_factor <- knn_house_factor[,c(1,6:43)]
+knn_house_factor <- knn_house_factor[,-c(2:3)]
 knn_final <- merge(knn_house_factor,knn_house_nonfactor,by='Id')
 #write.csv(knn_final,'knn_house.csv')
 
@@ -278,23 +286,41 @@ knn_train <- subset(knn_train,select=-c(Id,isTrain))
 knn_test <- knn_final[knn_final$isTrain==0,]
 knn_test <- subset(knn_test,select=-c(Id,isTrain,SalePrice))
 
-knn_ind <- sample(1:nrow(knn_train), size=0.8*nrow(knn_train))
+knn_ind <- sample(1:nrow(knn_train), size=0.75*nrow(knn_train))
 knn_training_cv <- knn_train[knn_ind,]
 knn_validation <- knn_train[-knn_ind,]
 
 
 
+# testing
+
+for (i in 1:10) {
+  aaa <- knnreg(knn_training_cv[,1:ncol(knn_training_cv)-1],knn_training_cv$SalePrice,k=i)
+  
+  aaa_8 <- predict(aaa, knn_validation[,1:ncol(knn_validation)-1])
+  rmse <- sqrt(sum((log(aaa_8+1)-log(knn_validation$SalePrice+1))^2)/length(aaa_8))
+  print(i)
+  print(rmse)
+}
+
+aaa <- knnreg(knn_train[,1:ncol(knn_train)-1],knn_train$SalePrice,k=8)
+aaa_8 <- predict(aaa, knn_test)
+aaa_result8 <- data.frame(Id=test$Id, SalePrice=aaa_8)
+write.csv(aaa_result8, "aaa8.csv", row.names=FALSE)
 
 
-knn_pred_w2 <- knn_predict_weighted(knn_train, knn_test, 7)
-knn_pred_w3 <- knn_predict_weighted(knn_train, knn_test, 8)
-knn_pred_w4 <- knn_predict_weighted(knn_train, knn_test, 9)
-knn_pred_w5 <- knn_predict_weighted(knn_train, knn_test, 10)
 
 
 
-knn_result_w4 <- data.frame(Id = test$Id, SalePrice = knn_pred_w4)
-write.csv(knn_result_w4, "knn_w9.csv", row.names=FALSE)
 
-knn_result_w5 <- data.frame(Id = test$Id, SalePrice = knn_pred_w5)
-write.csv(knn_result_w5, "knn_w10.csv", row.names=FALSE)
+
+
+
+
+
+knn_pred <- knn_predict_weighted(knn_train, knn_test, 8)
+
+knn_result <- data.frame(Id = test$Id, SalePrice = knn_pred)
+write.csv(knn_result, "knn_w8_manhattan.csv", row.names=FALSE)
+
+
