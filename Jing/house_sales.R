@@ -66,7 +66,7 @@ test <- subset(test,select=-c(isTrain,SalePrice))
 cor_data <- train %>% select_if(negate(is.factor))
 corr <- as.data.frame(round(cor(cor_data),2))
 corr_df <- data.frame(var = colnames(cor_data), cor = corr$SalePrice)
-corr_df[order(-corr_df$cor),][2:6,]
+corr_df[order(-corr_df$cor),][2:15,]
 #            var  cor
 # 5  OverallQual 0.79
 # 17   GrLivArea 0.71
@@ -200,6 +200,16 @@ manhattan_dist <- function(x,y) {
 }
 
 
+chisq_dist <- function(x,y) {
+  d = 0
+  for (i in 1:length(x)) {
+    d = d + ((x[[i]] - y[[i]])^2 / (x[[i]] + y[[i]]))
+  }
+  return(d)
+}
+
+
+
 
 knn_predict <- function(training, test, k) {
   pred <- c()
@@ -225,7 +235,8 @@ knn_predict_weighted <- function(training, test, k) {
   for (i in 1:nrow(test)) {
     dist <- c()
     for (j in 1:nrow(training)) {
-      dist <- c(dist, manhattan_dist(test[i,], training[j,]))
+      #dist <- c(dist, manhattan_dist(test[i,], training[j,]))
+      dist <- c(dist, chisq_dist(test[i,], training[j,]))
     }
     dist_df <- data.frame(SalePrice = training$SalePrice, dist)
     dist_df <- dist_df[order(dist_df$dist),]
@@ -254,33 +265,35 @@ normalize <- function(x) {
 }
 
 
-knn_house <- house
-knn_house <- select(knn_house, c(Id,OverallQual,Neighborhood,GrLivArea,GarageCars,ExterQual,TotalBsmtSF,
-                                 X1stFlrSF,GarageArea,BsmtFinSF1,X2ndFlrSF,BsmtQual,KitchenQual,
-                                 YearBuilt,FullBath,LotArea,isTrain,SalePrice))
 
-knn_house <- select(knn_house, c(Id,OverallQual,GrLivArea,GarageCars,TotalBsmtSF,
-                                 X1stFlrSF,GarageArea,BsmtFinSF1,X2ndFlrSF,isTrain,SalePrice))
+
+knn_house <- subset(house, !(house$Id %in% c(524,1299)))
+
+knn_house <- select(knn_house, c(Id,OverallQual,GrLivArea,GarageCars,GarageArea,TotalBsmtSF,
+                                 X1stFlrSF,BsmtFinSF1,X2ndFlrSF,YearBuilt,isTrain,SalePrice)) # 0.16343
 
 
 knn_house_nonfactor <- knn_house %>%  select_if(negate(is.factor))
 knn_house_factor <- data.frame(Id=knn_house$Id,knn_house %>% select_if(is.factor))
 
-knn_house_nonfactor[,2:9] <- as.data.frame(lapply(knn_house_nonfactor[,2:9], normalize))
+knn_house_nonfactor[,2:(ncol(knn_house_nonfactor)-2)] <- 
+  as.data.frame(lapply(knn_house_nonfactor[,2:(ncol(knn_house_nonfactor)-2)], normalize))
 
 
-for (i in 1:length(colnames(knn_house_factor))) {
-  if (is.factor(knn_house_factor[,i])) {
-    levels <- unique(knn_house_factor[,i])
-    for (j in 1:length(levels)) {
-      knn_house_factor[paste(colnames(knn_house_factor)[i],levels[j],sep='')] <- 
-        ifelse(knn_house_factor[,i]==levels[j],1,0)
-    }
-  }
-}
+# for (i in 1:length(colnames(knn_house_factor))) {
+#   if (is.factor(knn_house_factor[,i])) {
+#     levels <- unique(knn_house_factor[,i])
+#     for (j in 1:length(levels)) {
+#       knn_house_factor[paste(colnames(knn_house_factor)[i],levels[j],sep='')] <- 
+#         ifelse(knn_house_factor[,i]==levels[j],1,0)
+#     }
+#   }
+# }
 
-knn_house_factor <- knn_house_factor[,-c(2:3)]
-knn_final <- merge(knn_house_factor,knn_house_nonfactor,by='Id')
+
+#knn_house_factor <- knn_house_factor[,-c(2:3)]
+#knn_final <- merge(knn_house_factor,knn_house_nonfactor,by='Id')
+knn_final <- knn_house_nonfactor
 #write.csv(knn_final,'knn_house.csv')
 
 
@@ -306,7 +319,9 @@ for (i in 1:10) {
   print(rmse)
 }
 
-aaa <- knnreg(knn_train[,1:ncol(knn_train)-1],knn_train$SalePrice,k=8)
+
+
+aaa <- knnreg(knn_train[,1:ncol(knn_train)-1],knn_train$SalePrice,k=6)
 aaa_8 <- predict(aaa, knn_test)
 aaa_result8 <- data.frame(Id=test$Id, SalePrice=aaa_8)
 write.csv(aaa_result8, "aaa8.csv", row.names=FALSE)
@@ -324,6 +339,7 @@ write.csv(aaa_result8, "aaa8.csv", row.names=FALSE)
 knn_pred <- knn_predict_weighted(knn_train, knn_test, 8)
 
 knn_result <- data.frame(Id = test$Id, SalePrice = knn_pred)
-write.csv(knn_result, "knn_w8_manhattan.csv", row.names=FALSE)
+write.csv(knn_result, "knn_k8_p9_w_chisq_rmoutlier.csv", row.names=FALSE)
+
 
 
