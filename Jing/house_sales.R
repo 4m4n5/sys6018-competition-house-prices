@@ -194,7 +194,7 @@ euclidean_dist <- function(x,y) {
 manhattan_dist <- function(x,y) {
   d = 0
   for (i in 1:length(x)) {
-    d = d + abs(x[[i]] - y[[i]])^2
+    d = d + abs(x[[i]] - y[[i]])
   }
   return(d)
 }
@@ -235,8 +235,8 @@ knn_predict_weighted <- function(training, test, k) {
   for (i in 1:nrow(test)) {
     dist <- c()
     for (j in 1:nrow(training)) {
-      #dist <- c(dist, manhattan_dist(test[i,], training[j,]))
-      dist <- c(dist, chisq_dist(test[i,], training[j,]))
+      dist <- c(dist, manhattan_dist(test[i,], training[j,]))
+      #dist <- c(dist, chisq_dist(test[i,], training[j,]))
     }
     dist_df <- data.frame(SalePrice = training$SalePrice, dist)
     dist_df <- dist_df[order(dist_df$dist),]
@@ -321,7 +321,7 @@ for (i in 1:10) {
 
 
 
-aaa <- knnreg(knn_train[,1:ncol(knn_train)-1],knn_train$SalePrice,k=6)
+aaa <- knnreg(knn_train[,1:ncol(knn_train)-1],knn_train$SalePrice,k=8)
 aaa_8 <- predict(aaa, knn_test)
 aaa_result8 <- data.frame(Id=test$Id, SalePrice=aaa_8)
 write.csv(aaa_result8, "aaa8.csv", row.names=FALSE)
@@ -335,11 +335,11 @@ write.csv(aaa_result8, "aaa8.csv", row.names=FALSE)
 
 
 
-
+start = Sys.time()
 knn_pred <- knn_predict_weighted(knn_train, knn_test, 8)
 
 knn_result <- data.frame(Id = test$Id, SalePrice = knn_pred)
-write.csv(knn_result, "knn_k8_p9_w_chisq_rmoutlier.csv", row.names=FALSE)
+write.csv(knn_result, "knn_k8_p9_w_manhattan_rmoutlier.csv", row.names=FALSE)
 
 
 
