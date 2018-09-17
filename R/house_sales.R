@@ -310,5 +310,3 @@ knn_pred <- knn_predict_weighted(knn_train, knn_test, 9)
 knn_result <- data.frame(Id = test$Id, SalePrice = knn_pred)
 write.csv(knn_result, "knn_k9_p9_w_manhattan_rmoutlier_corrected.csv", row.names=FALSE)
 
-
-
