@@ -174,10 +174,9 @@ train <- subset(train,select=-isTrain)
 test <- combdata[combdata$isTrain==0,]
 test <- subset(test,select=-c(isTrain,SalePrice))
 
-# Jing's KNN ----------------------------------------------------
 # knn ---------------------------------------------------------------------
-## functions
 
+# most basic distance metric
 euclidean_dist <- function(x,y) {
   d = 0
   for (i in 1:length(x)) {
@@ -187,6 +186,7 @@ euclidean_dist <- function(x,y) {
   return(d)
 }
 
+# manhattan distance gave the best result
 manhattan_dist <- function(x,y) {
   d = 0
   for (i in 1:length(x)) {
@@ -195,23 +195,13 @@ manhattan_dist <- function(x,y) {
   return(d)
 }
 
-
-chisq_dist <- function(x,y) {
-  d = 0
-  for (i in 1:length(x)) {
-    d = d + ((x[[i]] - y[[i]])^2 / (x[[i]] + y[[i]]))
-  }
-  return(d)
-}
-
-
+# unweighted knn predict function
 knn_predict <- function(training, test, k) {
   pred <- c()
   for (i in 1:nrow(test)) {
     dist <- c()
     for (j in 1:nrow(training)) {
       dist <- c(dist, euclidean_dist(test[i,], training[j,]))
-      #dist <- c(dist, sqrt(sum((test[i,] - training[j,1:ncol(training)-1])^2)))
     }
     dist_df <- data.frame(SalePrice = training$SalePrice, dist)
     dist_df <- dist_df[order(dist_df$dist),]
@@ -222,26 +212,29 @@ knn_predict <- function(training, test, k) {
   return(pred)
 }
 
-
+# weighted knn predict function
 knn_predict_weighted <- function(training, test, k) {
   pred <- c()
   for (i in 1:nrow(test)) {
     dist <- c()
     for (j in 1:nrow(training)) {
       dist <- c(dist, manhattan_dist(test[i,], training[j,]))
-      #dist <- c(dist, chisq_dist(test[i,], training[j,]))
     }
     dist_df <- data.frame(SalePrice = training$SalePrice, dist)
     dist_df <- dist_df[order(dist_df$dist),]
     dist_df <- dist_df[1:k,]
     
+    # initialize numerator and denom for weighted knn calculation
     num = 0
     denom = 0
-    
     for (p in 1:nrow(dist_df)) {
       if (dist_df$dist[p] != 0) {
         num = num + dist_df$SalePrice[p] / dist_df$dist[p]
         denom = denom + 1/dist_df$dist[p]
+      }
+      else {
+        num = num + dist_df$SalePrice[p]  # for cases where two rows match exactly (dist = 0)
+        denom = denom + 1
       }
     }
     pred <- c(pred, num/denom)
@@ -249,34 +242,38 @@ knn_predict_weighted <- function(training, test, k) {
   return(pred)
 }
 
-
+# normalization/standardization function
 normalize <- function(x) {
   norm <- ((x - min(x))/(max(x) - min(x)))
   return (norm)
 }
 
-knn_house <- subset(combdata, !(combdata$Id %in% c(524,1299)))
 
-knn_house <- select(knn_house, c(Id,OverallQual,GrLivArea,GarageCars,GarageArea,TotalBsmtSF,
-                                 X1stFlrSF,BsmtFinSF1,X2ndFlrSF,YearBuilt,isTrain,SalePrice)) # 0.16343
+# following features selected based importance of variables from random forest
+# variables with the highest correlations with salesprice are not all good
+# these variables gave the best RMSLE when we tested on 25% of the training data.
+knn_house <- select(combdata, c(Id,OverallQual,GrLivArea,GarageCars,GarageArea,TotalBsmtSF,
+                                 X1stFlrSF,BsmtFinSF1,X2ndFlrSF,YearBuilt,isTrain,SalePrice)) 
 
-
+# the following code were written when we included both categorical and continuous vars
+# but later decided to go with only continuous ones
 knn_house_nonfactor <- knn_house %>%  select_if(negate(is.factor))
 knn_house_factor <- data.frame(Id=knn_house$Id,knn_house %>% select_if(is.factor))
 
+# normalize continuous vars to bring all values to [0,1]
 knn_house_nonfactor[,2:(ncol(knn_house_nonfactor)-2)] <- 
   as.data.frame(lapply(knn_house_nonfactor[,2:(ncol(knn_house_nonfactor)-2)], normalize))
 
 knn_final <- knn_house_nonfactor
-#write.csv(knn_final,'knn_house.csv')
 
+# separate back to train and test
 knn_train <- knn_final[knn_final$isTrain==1,]
 knn_train <- subset(knn_train,select=-c(Id,isTrain))
 knn_test <- knn_final[knn_final$isTrain==0,]
 knn_test <- subset(knn_test,select=-c(Id,isTrain,SalePrice))
 
+# make knn predictions
 knn_pred <- knn_predict_weighted(knn_train, knn_test, 8)
-
 knn_result <- data.frame(Id = test$Id, SalePrice = knn_pred)
 write.csv(knn_result, "knn_k8_p9_w_manhattan.csv", row.names=FALSE)
 
