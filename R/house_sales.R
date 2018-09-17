@@ -256,6 +256,7 @@ knn_house <- subset(house, !(house$Id %in% c(524,1299)))
 
 # following features selected based importance of variables from random forest
 # variables with the highest correlations with salesprice are not all good
+# these variables gave the best RMSLE when we tested on 25% of the training data.
 knn_house <- select(knn_house, c(Id,OverallQual,GrLivArea,GarageCars,GarageArea,TotalBsmtSF,
                                  X1stFlrSF,BsmtFinSF1,X2ndFlrSF,YearBuilt,isTrain,SalePrice))
 
